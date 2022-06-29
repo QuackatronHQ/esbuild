@@ -18,7 +18,7 @@ func turnPercentIntoNumberIfShorter(t *css_ast.Token) {
 
 // https://www.w3.org/TR/css-transforms-1/#two-d-transform-functions
 // https://drafts.csswg.org/css-transforms-2/#transform-functions
-func (p *parser) mangleTransforms(tokens []css_ast.Token) []css_ast.Token {
+func (*parser) mangleTransforms(tokens []css_ast.Token) []css_ast.Token {
 	for i := range tokens {
 		if token := &tokens[i]; token.Kind == css_lexer.TFunction {
 			if args := *token.Children; css_ast.TokensAreCommaSeparated(args) {

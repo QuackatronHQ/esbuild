@@ -777,7 +777,7 @@ flatten:
 	}
 }
 
-func (p *parser) lowerParenthesizedOptionalChain(loc logger.Loc, e *js_ast.ECall, childOut exprOut) js_ast.Expr {
+func (*parser) lowerParenthesizedOptionalChain(loc logger.Loc, e *js_ast.ECall, childOut exprOut) js_ast.Expr {
 	return childOut.thisArgWrapFunc(js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
 		Target: js_ast.Expr{Loc: loc, Data: &js_ast.EDot{
 			Target:  e.Target,
