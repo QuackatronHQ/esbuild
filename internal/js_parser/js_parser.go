@@ -8936,7 +8936,7 @@ func (p *parser) mangleIfExpr(loc logger.Loc, e *js_ast.EIf) js_ast.Expr {
 	return js_ast.Expr{Loc: loc, Data: e}
 }
 
-func (p *parser) isAnonymousNamedExpr(expr js_ast.Expr) bool {
+func (*parser) isAnonymousNamedExpr(expr js_ast.Expr) bool {
 	switch e := expr.Data.(type) {
 	case *js_ast.EArrow:
 		return true
@@ -10053,7 +10053,7 @@ func (p *parser) maybeRelocateVarsToTopLevel(decls []js_ast.Decl, mode relocateV
 	return js_ast.Stmt{Loc: value.Loc, Data: &js_ast.SExpr{Value: value}}, true
 }
 
-func (p *parser) markExprAsParenthesized(value js_ast.Expr) {
+func (*parser) markExprAsParenthesized(value js_ast.Expr) {
 	switch e := value.Data.(type) {
 	case *js_ast.EArray:
 		e.IsParenthesized = true
@@ -11568,7 +11568,7 @@ func (p *parser) isValidAssignmentTarget(expr js_ast.Expr) bool {
 }
 
 // "`a${'b'}c`" => "`abc`"
-func (p *parser) mangleTemplate(loc logger.Loc, e *js_ast.ETemplate) js_ast.Expr {
+func (*parser) mangleTemplate(loc logger.Loc, e *js_ast.ETemplate) js_ast.Expr {
 	// Can't inline strings if there's a custom template tag
 	if e.TagOrNil.Data == nil {
 		end := 0

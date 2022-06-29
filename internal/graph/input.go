@@ -120,6 +120,6 @@ type CopyRepr struct {
 	URLForCode string
 }
 
-func (repr *CopyRepr) ImportRecords() *[]ast.ImportRecord {
+func (*CopyRepr) ImportRecords() *[]ast.ImportRecord {
 	return nil
 }
