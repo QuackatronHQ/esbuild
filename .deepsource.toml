@@ -1,12 +1,13 @@
 version = 1
 
 [[analyzers]]
-name = "javascript"
-enabled = true
-
-[[analyzers]]
 name = "go"
-enabled = true
 
   [analyzers.meta]
   import_root = "github.com/QuackatronHQ/esbuild"
+
+[[transformers]]
+name = "gofmt"
+
+[[transformers]]
+name = "gofumpt"
