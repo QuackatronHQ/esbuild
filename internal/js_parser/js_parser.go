@@ -1269,7 +1269,6 @@ func (p *parser) declareSymbol(kind js_ast.SymbolKind, loc logger.Loc, name stri
 	// Overwrite this name in the declaring scope
 	p.currentScope.Members[name] = js_ast.ScopeMember{Ref: ref, Loc: loc}
 	return ref
-
 }
 
 func (p *parser) hoistSymbols(scope *js_ast.Scope) {
@@ -2444,7 +2443,8 @@ func (p *parser) parseAsyncPrefixExpr(asyncRange logger.Range, level js_ast.L, f
 		case js_lexer.TEqualsGreaterThan:
 			if level <= js_ast.LAssign {
 				arg := js_ast.Arg{Binding: js_ast.Binding{Loc: asyncRange.Loc, Data: &js_ast.BIdentifier{
-					Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"})}}}
+					Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"}),
+				}}}
 
 				p.pushScopeForParsePass(js_ast.ScopeFunctionArgs, asyncRange.Loc)
 				defer p.popScope()
@@ -2508,7 +2508,8 @@ func (p *parser) parseAsyncPrefixExpr(asyncRange logger.Range, level js_ast.L, f
 	// "async"
 	// "async + 1"
 	return js_ast.Expr{Loc: asyncRange.Loc, Data: &js_ast.EIdentifier{
-		Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"})}}
+		Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"}),
+	}}
 }
 
 func (p *parser) parseFnExpr(loc logger.Loc, isAsync bool, asyncRange logger.Range) js_ast.Expr {
@@ -2735,7 +2736,8 @@ func (p *parser) parseParenExpr(loc logger.Loc, level js_ast.L, opts parenExprOp
 	if isAsync {
 		p.logExprErrors(&errors)
 		async := js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{
-			Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"})}}
+			Ref: p.storeNameInRef(js_lexer.MaybeSubstring{String: "async"}),
+		}}
 		return js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
 			Target: async,
 			Args:   items,
@@ -3411,7 +3413,8 @@ func (p *parser) parsePrefix(level js_ast.L, errors *deferredErrors, flags exprF
 				how = " You can use 'Loader: map[string]api.Loader{\".js\": api.LoaderJSX}' to do that."
 			}
 			p.log.AddErrorWithNotes(&p.tracker, p.lexer.Range(), "The JSX syntax extension is not currently enabled", []logger.MsgData{{
-				Text: "The esbuild loader for this file is currently set to \"js\" but it must be set to \"jsx\" to be able to parse JSX syntax." + how}})
+				Text: "The esbuild loader for this file is currently set to \"js\" but it must be set to \"jsx\" to be able to parse JSX syntax." + how,
+			}})
 			p.options.jsx.Parse = true
 		}
 
@@ -5987,7 +5990,8 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 				expr := p.parseSuffix(p.parseAsyncPrefixExpr(asyncRange, js_ast.LComma, 0), js_ast.LComma, nil, 0)
 				p.lexer.ExpectOrInsertSemicolon()
 				return js_ast.Stmt{Loc: loc, Data: &js_ast.SExportDefault{
-					DefaultName: defaultName, Value: js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}}}}
+					DefaultName: defaultName, Value: js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}},
+				}}
 			}
 
 			if p.lexer.Token == js_lexer.TFunction || p.lexer.Token == js_lexer.TClass || p.lexer.IsContextualKeyword("interface") {
@@ -6049,7 +6053,8 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 			p.lexer.ExpectOrInsertSemicolon()
 			defaultName := createDefaultName()
 			return js_ast.Stmt{Loc: loc, Data: &js_ast.SExportDefault{
-				DefaultName: defaultName, Value: js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}}}}
+				DefaultName: defaultName, Value: js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}},
+			}}
 
 		case js_lexer.TAsterisk:
 			if !opts.isModuleScope && (!opts.isNamespaceScope || !opts.isTypeScriptDeclare) {
@@ -7520,7 +7525,8 @@ func (p *parser) visitStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt {
 				index = len(letDecls)
 				fnStmts[s.Fn.Name.Ref] = index
 				letDecls = append(letDecls, js_ast.Decl{Binding: js_ast.Binding{
-					Loc: s.Fn.Name.Loc, Data: &js_ast.BIdentifier{Ref: s.Fn.Name.Ref}}})
+					Loc: s.Fn.Name.Loc, Data: &js_ast.BIdentifier{Ref: s.Fn.Name.Ref},
+				}})
 
 				// Also write the function to the hoisted sibling symbol if applicable
 				if hoistedRef, ok := p.hoistedRefForSloppyModeBlockFn[s.Fn.Name.Ref]; ok {
@@ -7840,8 +7846,10 @@ func (p *parser) mangleStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt 
 			if len(result) > 0 && s.ValueOrNil.Data != nil {
 				prevStmt := result[len(result)-1]
 				if prevS, ok := prevStmt.Data.(*js_ast.SExpr); ok {
-					result[len(result)-1] = js_ast.Stmt{Loc: prevStmt.Loc,
-						Data: &js_ast.SReturn{ValueOrNil: js_ast.JoinWithComma(prevS.Value, s.ValueOrNil)}}
+					result[len(result)-1] = js_ast.Stmt{
+						Loc:  prevStmt.Loc,
+						Data: &js_ast.SReturn{ValueOrNil: js_ast.JoinWithComma(prevS.Value, s.ValueOrNil)},
+					}
 					continue
 				}
 			}
@@ -8956,7 +8964,8 @@ func (p *parser) maybeKeepExprSymbolName(value js_ast.Expr, name string, wasAnon
 }
 
 func (p *parser) keepExprSymbolName(value js_ast.Expr, name string) js_ast.Expr {
-	value = p.callRuntime(value.Loc, "__name", []js_ast.Expr{value,
+	value = p.callRuntime(value.Loc, "__name", []js_ast.Expr{
+		value,
 		{Loc: value.Loc, Data: &js_ast.EString{Value: helpers.StringToUTF16(name)}},
 	})
 
@@ -11744,7 +11753,8 @@ pattern:
 		p.log.AddIDWithNotes(logger.MsgID_JS_UnsupportedRegExp, logger.Debug, &p.tracker, r, fmt.Sprintf("%s in %s", what, where), append(notes, logger.MsgData{
 			Text: "This regular expression literal has been converted to a \"new RegExp()\" constructor " +
 				"to avoid generating code with a syntax error. However, you will need to include a " +
-				"polyfill for \"RegExp\" for your code to have the correct behavior at run-time."}))
+				"polyfill for \"RegExp\" for your code to have the correct behavior at run-time.",
+		}))
 	}
 
 	return
@@ -15266,8 +15276,10 @@ func newParser(log logger.Log, source logger.Source, lexer js_lexer.Lexer, optio
 	return p
 }
 
-var defaultJSXFactory = []string{"React", "createElement"}
-var defaultJSXFragment = []string{"React", "Fragment"}
+var (
+	defaultJSXFactory  = []string{"React", "createElement"}
+	defaultJSXFragment = []string{"React", "Fragment"}
+)
 
 func Parse(log logger.Log, source logger.Source, options Options) (result js_ast.AST, ok bool) {
 	ok = true
@@ -15371,7 +15383,7 @@ func Parse(log logger.Log, source logger.Source, options Options) (result js_ast
 		CanBeRemovedIfUnused: true,
 	}
 
-	var before = []js_ast.Part{nsExportPart}
+	before := []js_ast.Part{nsExportPart}
 	var parts []js_ast.Part
 	var after []js_ast.Part
 
@@ -15612,14 +15624,12 @@ func (p *parser) prepareForVisitPass() {
 	}
 
 	// Determine whether or not this file is ESM
-	p.isFileConsideredToHaveESMExports =
-		p.esmExportKeyword.Len > 0 ||
-			p.esmImportMeta.Len > 0 ||
-			p.topLevelAwaitKeyword.Len > 0 ||
-			p.options.moduleTypeData.Type.IsESM()
-	p.isFileConsideredESM =
-		p.isFileConsideredToHaveESMExports ||
-			p.esmImportStatementKeyword.Len > 0
+	p.isFileConsideredToHaveESMExports = p.esmExportKeyword.Len > 0 ||
+		p.esmImportMeta.Len > 0 ||
+		p.topLevelAwaitKeyword.Len > 0 ||
+		p.options.moduleTypeData.Type.IsESM()
+	p.isFileConsideredESM = p.isFileConsideredToHaveESMExports ||
+		p.esmImportStatementKeyword.Len > 0
 
 	// Legacy HTML comments are not allowed in ESM files
 	if p.isFileConsideredESM && p.lexer.LegacyHTMLCommentRange.Len > 0 {
