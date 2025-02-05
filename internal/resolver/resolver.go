@@ -883,8 +883,10 @@ func (r resolverQuery) dirInfoCached(path string) *dirInfo {
 	return cached
 }
 
-var errParseErrorImportCycle = errors.New("(import cycle)")
-var errParseErrorAlreadyLogged = errors.New("(error already logged)")
+var (
+	errParseErrorImportCycle   = errors.New("(import cycle)")
+	errParseErrorAlreadyLogged = errors.New("(error already logged)")
+)
 
 // This may return "parseErrorAlreadyLogged" in which case there was a syntax
 // error, but it's already been reported. No further errors should be logged.
@@ -1152,8 +1154,8 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 }
 
 // https://devblogs.microsoft.com/typescript/announcing-typescript-4-7-beta/#resolution-customization-with-modulesuffixes
-// "Note that the empty string '' in moduleSuffixes is necessary for TypeScript to
-// also look-up ./foo.ts. In a sense, the default value for moduleSuffixes is ['']."
+// "Note that the empty string ” in moduleSuffixes is necessary for TypeScript to
+// also look-up ./foo.ts. In a sense, the default value for moduleSuffixes is [”]."
 var defaultModuleSuffixes = []string{""}
 
 var rewrittenFileExtensions = map[string][]string{
@@ -2118,7 +2120,7 @@ func IsPackagePath(path string) bool {
 
 // This list can be obtained with the following command:
 //
-//   node --experimental-wasi-unstable-preview1 -p "[...require('module').builtinModules].join('\n')"
+//	node --experimental-wasi-unstable-preview1 -p "[...require('module').builtinModules].join('\n')"
 //
 // Be sure to use the *LATEST* version of node when updating this list!
 var BuiltInNodeModules = map[string]bool{

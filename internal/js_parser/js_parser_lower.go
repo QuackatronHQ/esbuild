@@ -327,8 +327,10 @@ func (p *parser) lowerFunction(
 					(*args)[i].Binding.Data = &js_ast.BIdentifier{Ref: ref}
 
 					// Append a variable declaration to the function body
-					prefixStmts = append(prefixStmts, js_ast.Stmt{Loc: arg.Binding.Loc,
-						Data: &js_ast.SLocal{Kind: js_ast.LocalVar, Decls: decls}})
+					prefixStmts = append(prefixStmts, js_ast.Stmt{
+						Loc:  arg.Binding.Loc,
+						Data: &js_ast.SLocal{Kind: js_ast.LocalVar, Decls: decls},
+					})
 				}
 			}
 		}
@@ -937,26 +939,26 @@ func (p *parser) lowerNullishCoalescing(loc logger.Loc, left js_ast.Expr, right 
 // properties are grouped into object literals and then passed to the
 // "__spreadValues" and "__spreadProps" functions like this:
 //
-//   "{a, b, ...c, d, e}" => "__spreadProps(__spreadValues(__spreadProps({a, b}, c), {d, e})"
+//	"{a, b, ...c, d, e}" => "__spreadProps(__spreadValues(__spreadProps({a, b}, c), {d, e})"
 //
 // If the object literal starts with a spread, then we pass an empty object
 // literal to "__spreadValues" to make sure we clone the object:
 //
-//   "{...a, b}" => "__spreadProps(__spreadValues({}, a), {b})"
+//	"{...a, b}" => "__spreadProps(__spreadValues({}, a), {b})"
 //
 // It's not immediately obvious why we don't compile everything to a single
 // call to a function that takes any number of arguments, since that would be
 // shorter. The reason is to preserve the order of side effects. Consider
 // this code:
 //
-//   let a = {
-//     get x() {
-//       b = {y: 2}
-//       return 1
-//     }
-//   }
-//   let b = {}
-//   let c = {...a, ...b}
+//	let a = {
+//	  get x() {
+//	    b = {y: 2}
+//	    return 1
+//	  }
+//	}
+//	let b = {}
+//	let c = {...a, ...b}
 //
 // Converting the above code to "let c = __spreadFn({}, a, null, b)" means "c"
 // becomes "{x: 1}" which is incorrect. Converting the above code instead to
@@ -1515,8 +1517,10 @@ func (p *parser) lowerObjectRestHelper(
 		for i, capturedKey := range capturedKeys {
 			keysToExclude[i] = capturedKey()
 		}
-		assign(binding, p.callRuntime(binding.Loc, "__objRest", []js_ast.Expr{init,
-			{Loc: binding.Loc, Data: &js_ast.EArray{Items: keysToExclude, IsSingleLine: isSingleLine}}}))
+		assign(binding, p.callRuntime(binding.Loc, "__objRest", []js_ast.Expr{
+			init,
+			{Loc: binding.Loc, Data: &js_ast.EArray{Items: keysToExclude, IsSingleLine: isSingleLine}},
+		}))
 	}
 
 	splitArrayPattern := func(
