@@ -521,17 +521,17 @@ var nonDeprecatedElementsSupportedByIE7 = map[string]bool{
 // if any of the selectors are unsafe, since then browsers which don't support
 // that particular feature would ignore the entire merged qualified rule:
 //
-//   Input:
-//     a { color: red }
-//     b { color: red }
-//     input::-moz-placeholder { color: red }
+//	Input:
+//	  a { color: red }
+//	  b { color: red }
+//	  input::-moz-placeholder { color: red }
 //
-//   Valid output:
-//     a, b { color: red }
-//     input::-moz-placeholder { color: red }
+//	Valid output:
+//	  a, b { color: red }
+//	  input::-moz-placeholder { color: red }
 //
-//   Invalid output:
-//     a, b, input::-moz-placeholder { color: red }
+//	Invalid output:
+//	  a, b, input::-moz-placeholder { color: red }
 //
 // This considers IE 7 and above to be a browser that a user could possibly use.
 // Versions of IE less than 6 are not considered.
@@ -1636,8 +1636,10 @@ stop:
 		if corrected, ok := css_ast.MaybeCorrectDeclarationTypo(keyText); ok {
 			data := p.tracker.MsgData(keyToken.Range, fmt.Sprintf("%q is not a known CSS property", keyText))
 			data.Location.Suggestion = corrected
-			p.log.AddMsgID(logger.MsgID_CSS_UnsupportedCSSProperty, logger.Msg{Kind: logger.Warning, Data: data,
-				Notes: []logger.MsgData{{Text: fmt.Sprintf("Did you mean %q instead?", corrected)}}})
+			p.log.AddMsgID(logger.MsgID_CSS_UnsupportedCSSProperty, logger.Msg{
+				Kind: logger.Warning, Data: data,
+				Notes: []logger.MsgData{{Text: fmt.Sprintf("Did you mean %q instead?", corrected)}},
+			})
 		}
 	}
 
