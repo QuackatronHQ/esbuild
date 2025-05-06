@@ -480,12 +480,14 @@ type EImportMeta struct {
 }
 
 // These help reduce unnecessary memory allocations
-var BMissingShared = &BMissing{}
-var EMissingShared = &EMissing{}
-var ESuperShared = &ESuper{}
-var ENullShared = &ENull{}
-var EUndefinedShared = &EUndefined{}
-var EThisShared = &EThis{}
+var (
+	BMissingShared   = &BMissing{}
+	EMissingShared   = &EMissing{}
+	ESuperShared     = &ESuper{}
+	ENullShared      = &ENull{}
+	EUndefinedShared = &EUndefined{}
+	EThisShared      = &EThis{}
+)
 
 type ENew struct {
 	Target        Expr

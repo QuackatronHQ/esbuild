@@ -1636,8 +1636,10 @@ stop:
 		if corrected, ok := css_ast.MaybeCorrectDeclarationTypo(keyText); ok {
 			data := p.tracker.MsgData(keyToken.Range, fmt.Sprintf("%q is not a known CSS property", keyText))
 			data.Location.Suggestion = corrected
-			p.log.AddMsgID(logger.MsgID_CSS_UnsupportedCSSProperty, logger.Msg{Kind: logger.Warning, Data: data,
-				Notes: []logger.MsgData{{Text: fmt.Sprintf("Did you mean %q instead?", corrected)}}})
+			p.log.AddMsgID(logger.MsgID_CSS_UnsupportedCSSProperty, logger.Msg{
+				Kind: logger.Warning, Data: data,
+				Notes: []logger.MsgData{{Text: fmt.Sprintf("Did you mean %q instead?", corrected)}},
+			})
 		}
 	}
 
