@@ -1126,7 +1126,7 @@ func (a crossChunkImportArray) Less(i int, j int) bool {
 }
 
 // Sort cross-chunk imports by chunk name for determinism
-func (c *linkerContext) sortedCrossChunkImports(chunks []chunkInfo, importsFromOtherChunks map[uint32]crossChunkImportItemArray) crossChunkImportArray {
+func (*linkerContext) sortedCrossChunkImports(chunks []chunkInfo, importsFromOtherChunks map[uint32]crossChunkImportItemArray) crossChunkImportArray {
 	result := make(crossChunkImportArray, 0, len(importsFromOtherChunks))
 
 	for otherChunkIndex, importItems := range importsFromOtherChunks {

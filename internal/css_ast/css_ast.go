@@ -314,7 +314,7 @@ func (*RAtImport) Equal(rule R) bool {
 	return false
 }
 
-func (r *RAtImport) Hash() (uint32, bool) {
+func (*RAtImport) Hash() (uint32, bool) {
 	return 0, false
 }
 

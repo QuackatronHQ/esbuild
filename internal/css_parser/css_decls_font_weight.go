@@ -7,7 +7,7 @@ import (
 	"github.com/evanw/esbuild/internal/css_lexer"
 )
 
-func (p *parser) mangleFontWeight(token css_ast.Token) css_ast.Token {
+func (*parser) mangleFontWeight(token css_ast.Token) css_ast.Token {
 	if token.Kind != css_lexer.TIdent {
 		return token
 	}

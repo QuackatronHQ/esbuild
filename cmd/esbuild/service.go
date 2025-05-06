@@ -918,7 +918,7 @@ func (service *serviceType) convertPlugins(key int, jsPlugins interface{}, activ
 	}}, nil
 }
 
-func (service *serviceType) handleTransformRequest(id uint32, request map[string]interface{}) []byte {
+func (*serviceType) handleTransformRequest(id uint32, request map[string]interface{}) []byte {
 	inputFS := request["inputFS"].(bool)
 	input := request["input"].(string)
 	flags := decodeStringArray(request["flags"].([]interface{}))
@@ -988,7 +988,7 @@ func (service *serviceType) handleTransformRequest(id uint32, request map[string
 	})
 }
 
-func (service *serviceType) handleFormatMessagesRequest(id uint32, request map[string]interface{}) []byte {
+func (*serviceType) handleFormatMessagesRequest(id uint32, request map[string]interface{}) []byte {
 	msgs := decodeMessages(request["messages"].([]interface{}))
 
 	options := api.FormatMessagesOptions{
@@ -1014,7 +1014,7 @@ func (service *serviceType) handleFormatMessagesRequest(id uint32, request map[s
 	})
 }
 
-func (service *serviceType) handleAnalyzeMetafileRequest(id uint32, request map[string]interface{}) []byte {
+func (*serviceType) handleAnalyzeMetafileRequest(id uint32, request map[string]interface{}) []byte {
 	metafile := request["metafile"].(string)
 
 	options := api.AnalyzeMetafileOptions{}

@@ -151,7 +151,7 @@ func (f *InMemoryOpenedFile) Read(start int, end int) ([]byte, error) {
 	return []byte(f.Contents[start:end]), nil
 }
 
-func (f *InMemoryOpenedFile) Close() error {
+func (*InMemoryOpenedFile) Close() error {
 	return nil
 }
 
