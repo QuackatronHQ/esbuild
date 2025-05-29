@@ -1834,36 +1834,34 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 					// So we just unconditionally do this instead.
 					result.lowerAllStaticFields = true
 				}
-			} else {
-				if p.privateSymbolNeedsToBeLowered(private) {
-					result.lowerAllInstanceFields = true
+			} else if p.privateSymbolNeedsToBeLowered(private) {
+				result.lowerAllInstanceFields = true
 
-					// We can't transform this:
-					//
-					//   class Foo {
-					//     #foo = 123
-					//     static bar = new Foo().#foo
-					//   }
-					//
-					// into this:
-					//
-					//   var _foo;
-					//   const _Foo = class {
-					//     constructor() {
-					//       _foo.set(this, 123);
-					//     }
-					//     static bar = __privateGet(new _Foo(), _foo);
-					//   };
-					//   let Foo = _Foo;
-					//   _foo = new WeakMap();
-					//
-					// because "_Foo" won't be initialized in the initializer for "bar".
-					// So we currently lower all static fields in this case too. This
-					// isn't great and it would be good to find a way to avoid this.
-					// The shadowing symbol substitution mechanism should probably be
-					// rethought.
-					result.lowerAllStaticFields = true
-				}
+				// We can't transform this:
+				//
+				//   class Foo {
+				//     #foo = 123
+				//     static bar = new Foo().#foo
+				//   }
+				//
+				// into this:
+				//
+				//   var _foo;
+				//   const _Foo = class {
+				//     constructor() {
+				//       _foo.set(this, 123);
+				//     }
+				//     static bar = __privateGet(new _Foo(), _foo);
+				//   };
+				//   let Foo = _Foo;
+				//   _foo = new WeakMap();
+				//
+				// because "_Foo" won't be initialized in the initializer for "bar".
+				// So we currently lower all static fields in this case too. This
+				// isn't great and it would be good to find a way to avoid this.
+				// The shadowing symbol substitution mechanism should probably be
+				// rethought.
+				result.lowerAllStaticFields = true
 			}
 			continue
 		}
@@ -2624,15 +2622,8 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 			}})
 			init = js_ast.Expr{Loc: classLoc, Data: &js_ast.EIdentifier{Ref: captureRef}}
 			p.recordUsage(captureRef)
-		} else {
-			// If there are class decorators, then we actually need to mutate the
-			// immutable "const" binding that shadows everything in the class body.
-			// The official TypeScript compiler does this by rewriting all class name
-			// references in the class body to another temporary variable. This is
-			// basically what we're doing here.
-			if result.shadowRef != js_ast.InvalidRef {
-				p.mergeSymbols(result.shadowRef, nameRef)
-			}
+		} else if result.shadowRef != js_ast.InvalidRef {
+			p.mergeSymbols(result.shadowRef, nameRef)
 		}
 
 		// Generate the variable statement that will represent the class statement

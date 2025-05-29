@@ -747,18 +747,16 @@ func pathRelativeToOutbase(
 		}
 		baseName = sanitizeFilePathForVirtualModulePath(base)
 		return
-	} else {
+	} else if avoidIndex {
 		// Heuristic: If the file is named something like "index.js", then use
 		// the name of the parent directory instead. This helps avoid the
 		// situation where many chunks are named "index" because of people
 		// dynamically-importing npm packages that make use of node's implicit
 		// "index" file name feature.
-		if avoidIndex {
-			base := fs.Base(absPath)
-			base = base[:len(base)-len(fs.Ext(base))]
-			if base == "index" {
-				absPath = fs.Dir(absPath)
-			}
+		base := fs.Base(absPath)
+		base = base[:len(base)-len(fs.Ext(base))]
+		if base == "index" {
+			absPath = fs.Dir(absPath)
 		}
 	}
 
@@ -4230,23 +4228,11 @@ func (c *linkerContext) generateEntryPointTailJS(
 					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
 				}}}})
 			}
-		} else {
-			if repr.Meta.Wrap == graph.WrapESM {
-				// "init_foo();"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
-					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
-				}}}})
-			}
-
-			if repr.Meta.ForceIncludeExportsForEntryPoint {
-				// "return __toCommonJS(exports);"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SReturn{
-					ValueOrNil: js_ast.Expr{Data: &js_ast.ECall{
-						Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: toCommonJSRef}},
-						Args:   []js_ast.Expr{{Data: &js_ast.EIdentifier{Ref: repr.AST.ExportsRef}}},
-					}},
-				}})
-			}
+		} else if repr.Meta.Wrap == graph.WrapESM {
+			// "init_foo();"
+			stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
+				Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
+			}}}})
 		}
 
 	case config.FormatCommonJS:
@@ -4261,13 +4247,11 @@ func (c *linkerContext) generateEntryPointTailJS(
 					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
 				}},
 			))
-		} else {
-			if repr.Meta.Wrap == graph.WrapESM {
-				// "init_foo();"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
-					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
-				}}}})
-			}
+		} else if repr.Meta.Wrap == graph.WrapESM {
+			// "init_foo();"
+			stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
+				Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
+			}}}})
 		}
 
 		// If we are generating CommonJS for node, encode the known export names in
