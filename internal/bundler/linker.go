@@ -747,18 +747,16 @@ func pathRelativeToOutbase(
 		}
 		baseName = sanitizeFilePathForVirtualModulePath(base)
 		return
-	} else {
+	} else if avoidIndex {
 		// Heuristic: If the file is named something like "index.js", then use
 		// the name of the parent directory instead. This helps avoid the
 		// situation where many chunks are named "index" because of people
 		// dynamically-importing npm packages that make use of node's implicit
 		// "index" file name feature.
-		if avoidIndex {
-			base := fs.Base(absPath)
-			base = base[:len(base)-len(fs.Ext(base))]
-			if base == "index" {
-				absPath = fs.Dir(absPath)
-			}
+		base := fs.Base(absPath)
+		base = base[:len(base)-len(fs.Ext(base))]
+		if base == "index" {
+			absPath = fs.Dir(absPath)
 		}
 	}
 
@@ -991,8 +989,7 @@ func (c *linkerContext) computeCrossChunkDependencies(chunks []chunkInfo) {
 			// Ignore uses that aren't top-level symbols
 			if otherChunkIndex := c.graph.Symbols.Get(importRef).ChunkIndex; otherChunkIndex.IsValid() {
 				if otherChunkIndex := otherChunkIndex.GetIndex(); otherChunkIndex != uint32(chunkIndex) {
-					chunkRepr.importsFromOtherChunks[otherChunkIndex] =
-						append(chunkRepr.importsFromOtherChunks[otherChunkIndex], crossChunkImportItem{ref: importRef})
+					chunkRepr.importsFromOtherChunks[otherChunkIndex] = append(chunkRepr.importsFromOtherChunks[otherChunkIndex], crossChunkImportItem{ref: importRef})
 					chunkMetas[otherChunkIndex].exports[importRef] = true
 				}
 			}
@@ -2644,12 +2641,11 @@ func (c *linkerContext) addExportsForExportStar(
 				}
 			} else if existing.SourceIndex != otherSourceIndex {
 				// Two different re-exports colliding makes it potentially ambiguous
-				existing.PotentiallyAmbiguousExportStarRefs =
-					append(existing.PotentiallyAmbiguousExportStarRefs, graph.ImportData{
-						SourceIndex: otherSourceIndex,
-						Ref:         name.Ref,
-						NameLoc:     name.AliasLoc,
-					})
+				existing.PotentiallyAmbiguousExportStarRefs = append(existing.PotentiallyAmbiguousExportStarRefs, graph.ImportData{
+					SourceIndex: otherSourceIndex,
+					Ref:         name.Ref,
+					NameLoc:     name.AliasLoc,
+				})
 				resolvedExports[alias] = existing
 			}
 		}
@@ -2968,11 +2964,11 @@ func sanitizeFilePathForVirtualModulePath(path string) string {
 // order that JavaScript modules were evaluated in before the top-level await
 // feature was introduced.
 //
-//     A
-//    / \
-//   B   C
-//    \ /
-//     D
+//	  A
+//	 / \
+//	B   C
+//	 \ /
+//	  D
 //
 // If A imports B and then C, B imports D, and C imports D, then the JavaScript
 // traversal order is D B C A.
@@ -3036,11 +3032,11 @@ func (c *linkerContext) findImportedCSSFilesInJSOrder(entryPoint uint32) (order 
 // CSS file multiple times is equivalent to evaluating it once at the last
 // location. So we drop all but the last evaluation in the order.
 //
-//     A
-//    / \
-//   B   C
-//    \ /
-//     D
+//	  A
+//	 / \
+//	B   C
+//	 \ /
+//	  D
 //
 // If A imports B and then C, B imports D, and C imports D, then the CSS
 // traversal order is B D C A.
@@ -3657,9 +3653,12 @@ func (c *linkerContext) convertStmtsForChunk(sourceIndex uint32, stmtList *stmtL
 			} else {
 				if record.SourceIndex.IsValid() {
 					if otherRepr := c.graph.Files[record.SourceIndex.GetIndex()].InputFile.Repr.(*graph.JSRepr); otherRepr.Meta.Wrap == graph.WrapESM {
-						stmtList.insideWrapperPrefix = append(stmtList.insideWrapperPrefix, js_ast.Stmt{Loc: stmt.Loc,
+						stmtList.insideWrapperPrefix = append(stmtList.insideWrapperPrefix, js_ast.Stmt{
+							Loc: stmt.Loc,
 							Data: &js_ast.SExpr{Value: js_ast.Expr{Loc: stmt.Loc, Data: &js_ast.ECall{
-								Target: js_ast.Expr{Loc: stmt.Loc, Data: &js_ast.EIdentifier{Ref: otherRepr.AST.WrapperRef}}}}}})
+								Target: js_ast.Expr{Loc: stmt.Loc, Data: &js_ast.EIdentifier{Ref: otherRepr.AST.WrapperRef}},
+							}}},
+						})
 					}
 				}
 
@@ -4230,23 +4229,11 @@ func (c *linkerContext) generateEntryPointTailJS(
 					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
 				}}}})
 			}
-		} else {
-			if repr.Meta.Wrap == graph.WrapESM {
-				// "init_foo();"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
-					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
-				}}}})
-			}
-
-			if repr.Meta.ForceIncludeExportsForEntryPoint {
-				// "return __toCommonJS(exports);"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SReturn{
-					ValueOrNil: js_ast.Expr{Data: &js_ast.ECall{
-						Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: toCommonJSRef}},
-						Args:   []js_ast.Expr{{Data: &js_ast.EIdentifier{Ref: repr.AST.ExportsRef}}},
-					}},
-				}})
-			}
+		} else if repr.Meta.Wrap == graph.WrapESM {
+			// "init_foo();"
+			stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
+				Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
+			}}}})
 		}
 
 	case config.FormatCommonJS:
@@ -4261,13 +4248,11 @@ func (c *linkerContext) generateEntryPointTailJS(
 					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
 				}},
 			))
-		} else {
-			if repr.Meta.Wrap == graph.WrapESM {
-				// "init_foo();"
-				stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
-					Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
-				}}}})
-			}
+		} else if repr.Meta.Wrap == graph.WrapESM {
+			// "init_foo();"
+			stmts = append(stmts, js_ast.Stmt{Data: &js_ast.SExpr{Value: js_ast.Expr{Data: &js_ast.ECall{
+				Target: js_ast.Expr{Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}},
+			}}}})
 		}
 
 		// If we are generating CommonJS for node, encode the known export names in
@@ -4349,7 +4334,11 @@ func (c *linkerContext) generateEntryPointTailJS(
 				Data: &js_ast.SExportDefault{Value: js_ast.Stmt{
 					Data: &js_ast.SExpr{Value: js_ast.Expr{
 						Data: &js_ast.ECall{Target: js_ast.Expr{
-							Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}}}}}}}})
+							Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef},
+						}},
+					}},
+				}},
+			})
 		} else {
 			if repr.Meta.Wrap == graph.WrapESM {
 				if repr.Meta.IsAsyncOrHasAsyncDependency {
@@ -4358,13 +4347,20 @@ func (c *linkerContext) generateEntryPointTailJS(
 						Data: &js_ast.SExpr{Value: js_ast.Expr{
 							Data: &js_ast.EAwait{Value: js_ast.Expr{
 								Data: &js_ast.ECall{Target: js_ast.Expr{
-									Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}}}}}}}})
+									Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef},
+								}},
+							}},
+						}},
+					})
 				} else {
 					// "init_foo();"
 					stmts = append(stmts, js_ast.Stmt{
 						Data: &js_ast.SExpr{
 							Value: js_ast.Expr{Data: &js_ast.ECall{Target: js_ast.Expr{
-								Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef}}}}}})
+								Data: &js_ast.EIdentifier{Ref: repr.AST.WrapperRef},
+							}}},
+						},
+					})
 				}
 			}
 
